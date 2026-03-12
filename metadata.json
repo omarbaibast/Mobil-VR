@@ -1,0 +1,5 @@
+{
+  "name": "VR Controller Explorer",
+  "description": "A pure Three.js WebVR experience controlled entirely by a PS4 gamepad.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VR Controller Explorer</title>
+    <style>
+      body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; }
+      #info {
+        position: absolute;
+        top: 10px;
+        width: 100%;
+        text-align: center;
+        color: white;
+        pointer-events: none;
+        text-shadow: 1px 1px 2px black;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="info">
+      <h1>VR Controller Explorer</h1>
+      <p id="status">Controller: Disconnected</p>
+      <p>Left Stick: Move | Right Stick: Turn</p>
+      <div id="debug" style="font-family: monospace; font-size: 12px; background: rgba(0,0,0,0.5); padding: 10px; margin-top: 10px; border-radius: 5px; text-align: left; display: inline-block;">
+        Waiting for input... (Press any button on PS4 controller)
+      </div>
+    </div>
+    <script type="module" src="/src/game.js"></script>
+  </body>
+</html>
+
