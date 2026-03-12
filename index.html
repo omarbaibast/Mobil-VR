@@ -1,63 +1,145 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VR Controller Explorer</title>
-    <style>
-      body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; }
-      #info {
-        position: absolute;
-        top: 10px;
-        width: 100%;
-        text-align: center;
-        color: white;
-        pointer-events: none;
-        text-shadow: 1px 1px 2px black;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; cursor: pointer;">
-      <h1 style="font-size: 48px; margin-bottom: 20px;">VR PROCEDURAL SHOOTER</h1>
-      <div style="background: #333; padding: 30px; border-radius: 15px; border: 2px solid #555;">
-        <p style="font-size: 24px; color: #00ff00;">CLICK ANYWHERE TO START</p>
-        <p style="margin-top: 20px; opacity: 0.8;">(This ensures the window is focused for your controller)</p>
-        <div style="margin-top: 30px; text-align: left; display: inline-block;">
-          <p>🎮 <b>Controller:</b> LS to Move, RS to Turn, R2 to Shoot</p>
-          <p>⌨️ <b>Keyboard:</b> WASD to Move, Q/E to Turn, SPACE to Shoot</p>
-        </div>
-      </div>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VR Controller Shooter</title>
+<style>
+  body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+  #info { position: absolute; top: 10px; width: 100%; text-align: center; color: white; pointer-events: none; text-shadow: 1px 1px 2px black; }
+</style>
+</head>
+<body>
+<div id="overlay" style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index:1000; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; text-align:center; cursor:pointer;">
+  <h1 style="font-size:48px;margin-bottom:20px;">VR PROCEDURAL SHOOTER</h1>
+  <div style="background:#333; padding:30px; border-radius:15px; border:2px solid #555;">
+    <p style="font-size:24px; color:#00ff00;">CLICK ANYWHERE TO START</p>
+    <p style="margin-top:20px; opacity:0.8;">(This ensures the window is focused for your controller)</p>
+    <div style="margin-top:30px; text-align:left; display:inline-block;">
+      <p>🎮 <b>Controller:</b> LS to Move, RS to Turn, R2 to Shoot</p>
+      <p>⌨️ <b>Keyboard:</b> WASD to Move, Q/E to Turn, SPACE to Shoot</p>
     </div>
+  </div>
+</div>
 
-    <div id="info">
-      <h1>VR Procedural Shooter</h1>
-      <p id="status">Controller: Searching (Press a button)...</p>
-      <div id="instruction" style="background: rgba(255, 255, 0, 0.2); border: 2px solid yellow; color: yellow; padding: 10px; margin: 10px; font-weight: bold; border-radius: 5px; display: block;">
-        🎮 PRESS ANY BUTTON ON YOUR CONTROLLER TO ACTIVATE
-      </div>
-      <div id="score-board" style="font-size: 24px; font-weight: bold; color: #00ff00; margin: 10px 0;">Score: 0</div>
-      <p>LS: Move | RS: Turn | R2: Shoot</p>
-      <div id="debug" style="font-family: monospace; font-size: 12px; background: rgba(0,0,0,0.5); padding: 10px; margin-top: 10px; border-radius: 5px; text-align: left; display: inline-block;">
-        Waiting for input...
-      </div>
-    </div>
-    <!-- Crosshair for VR/Desktop aiming -->
-    <div id="crosshair" style="position: fixed; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid rgba(0,255,0,0.5); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 100;">
-      <div style="position: absolute; top: 50%; left: 50%; width: 2px; height: 2px; background: #00ff00; transform: translate(-50%, -50%);"></div>
-    </div>
-    
-    <script type="module">
-      // Error catching for GitHub Pages path issues
-      window.addEventListener('error', (e) => {
-        if (e.target && (e.target.src || e.target.href)) {
-          const status = document.getElementById('status');
-          if (status) status.innerHTML = `<span style="color:red">Error loading: ${e.target.src || e.target.href}</span>`;
-          console.error('Resource failed to load:', e.target.src || e.target.href);
-        }
-      }, true);
-    </script>
-    <script type="module" src="./src/game.js"></script>
-  </body>
+<div id="info">
+  <h1>VR Procedural Shooter</h1>
+  <p id="status">Controller: Searching (Press a button)...</p>
+  <div id="instruction" style="background: rgba(255,255,0,0.2); border:2px solid yellow; color:yellow; padding:10px; margin:10px; font-weight:bold; border-radius:5px;">
+    🎮 PRESS ANY BUTTON ON YOUR CONTROLLER TO ACTIVATE
+  </div>
+  <div id="score-board" style="font-size:24px; font-weight:bold; color:#00ff00; margin:10px 0;">Score: 0</div>
+  <p>LS: Move | RS: Turn | R2: Shoot</p>
+  <div id="debug" style="font-family: monospace; font-size:12px; background: rgba(0,0,0,0.5); padding:10px; margin-top:10px; border-radius:5px; text-align:left; display:inline-block;">
+    Waiting for input...
+  </div>
+</div>
+
+<div id="crosshair" style="position:fixed; top:50%; left:50%; width:20px; height:20px; border:2px solid rgba(0,255,0,0.5); border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; z-index:100;">
+  <div style="position:absolute; top:50%; left:50%; width:2px; height:2px; background:#00ff00; transform:translate(-50%,-50%);"></div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+
+const MOVE_SPEED=0.15, ROTATION_SPEED=0.03, BULLET_SPEED=1.2, ENEMY_SPEED=0.04;
+const keys={}; window.addEventListener('keydown',e=>keys[e.code]=true); window.addEventListener('keyup',e=>keys[e.code]=false);
+
+const overlay=document.getElementById('overlay');
+overlay.addEventListener('click',()=>{ overlay.style.display='none'; initGame(); });
+
+function initGame(){
+  let score=0, bullets=[], enemies=[], lastShotTime=0, shootCooldown=150;
+  const loader=new GLTFLoader();
+  let enemyModel=null, enemyAnimations=[], mixers=[], clock=new THREE.Clock();
+  const scene=new THREE.Scene(); scene.background=new THREE.Color(0x000000);
+  const textureLoader=new THREE.TextureLoader();
+  textureLoader.load('https://threejs.org/examples/textures/2294472375_b4a848c635_c.jpg',t=>{t.mapping=THREE.EquirectangularReflectionMapping; scene.background=t; scene.environment=t;});
+  scene.fog=new THREE.FogExp2(0x80a0e0,0.01);
+  const camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(0,1.6,3);
+  const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(window.devicePixelRatio); renderer.setSize(window.innerWidth,window.innerHeight); renderer.xr.enabled=true; document.body.appendChild(renderer.domElement); document.body.appendChild(VRButton.createButton(renderer));
+
+  const playerGroup=new THREE.Group(); playerGroup.add(camera); scene.add(playerGroup);
+
+  const floorGeometry=new THREE.PlaneGeometry(500,500);
+  const floorBase=textureLoader.load('https://threejs.org/examples/textures/terrain/grasslight-big.jpg'); floorBase.wrapS=floorBase.wrapT=THREE.RepeatWrapping; floorBase.repeat.set(100,100);
+  const floorMaterial=new THREE.MeshStandardMaterial({map:floorBase, roughness:0.8, metalness:0.1});
+  const floor=new THREE.Mesh(floorGeometry,floorMaterial); floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
+
+  const ambientLight=new THREE.AmbientLight(0xffffff,0.4); scene.add(ambientLight);
+  const directionalLight=new THREE.DirectionalLight(0xffffff,1.2); directionalLight.position.set(10,20,10); directionalLight.castShadow=true; scene.add(directionalLight);
+
+  const gunGroup=new THREE.Group();
+  const gunBody=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,0.4), new THREE.MeshStandardMaterial({color:0x111111, metalness:0.9, roughness:0.1}));
+  gunBody.position.set(0.2,-0.2,-0.5); gunGroup.add(gunBody); camera.add(gunGroup);
+
+  function createEnemy(){
+    if(!enemyModel) return;
+    const group=enemyModel.clone();
+    let mixer=null;
+    if(enemyAnimations.length>1){ mixer=new THREE.AnimationMixer(group); mixer.clipAction(enemyAnimations[1]).play(); mixers.push(mixer); }
+    const angle=Math.random()*Math.PI*2, dist=30+Math.random()*20;
+    group.position.set(playerGroup.position.x+Math.cos(angle)*dist,0,playerGroup.position.z+Math.sin(angle)*dist);
+    group.scale.set(1.5,1.5,1.5); scene.add(group);
+    enemies.push({mesh:group,mixer:mixer,health:1});
+  }
+
+  loader.load('https://threejs.org/examples/models/gltf/Soldier.glb',g=>{
+    enemyModel=g.scene; enemyAnimations=g.animations; enemyModel.traverse(c=>{if(c.isMesh){c.castShadow=true; c.receiveShadow=true;}});
+    for(let i=0;i<5;i++) createEnemy();
+  });
+
+  function shoot(){ const now=Date.now(); if(now-lastShotTime<shootCooldown) return; lastShotTime=now;
+    const bullet=new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({color:0xffff00}));
+    const startPos=new THREE.Vector3(); camera.getWorldPosition(startPos); bullet.position.copy(startPos);
+    const dir=new THREE.Vector3(); camera.getWorldDirection(dir);
+    bullets.push({mesh:bullet,dir:dir}); scene.add(bullet);
+  }
+
+  function updateGame(){
+    const delta=clock.getDelta(); mixers.forEach(m=>m.update(delta));
+    for(let i=bullets.length-1;i>=0;i--){
+      const b=bullets[i]; b.mesh.position.addScaledVector(b.dir,BULLET_SPEED);
+      if(b.mesh.position.distanceTo(playerGroup.position)>150){scene.remove(b.mesh); bullets.splice(i,1); continue;}
+      for(let j=enemies.length-1;j>=0;j--){const e=enemies[j]; if(b.mesh.position.distanceTo(e.mesh.position)<1.5){ scene.remove(e.mesh); enemies.splice(j,1); scene.remove(b.mesh); bullets.splice(i,1); score+=10; const scoreEl=document.getElementById('score-board'); if(scoreEl) scoreEl.innerText=`Score: ${score}`; break;}}
+    }
+    enemies.forEach(e=>{const dir=new THREE.Vector3().subVectors(playerGroup.position,e.mesh.position).normalize(); e.mesh.position.addScaledVector(dir,ENEMY_SPEED); e.mesh.lookAt(playerGroup.position.x,0,playerGroup.position.z);});
+    if(enemies.length<15 && Math.random()<0.015) createEnemy();
+  }
+
+  let gamepad=null;
+  function updateGamepad(){
+    const gps=navigator.getGamepads(); gamepad=null; if(gps) for(let i=0;i<gps.length;i++){if(gps[i]){gamepad=gps[i]; break;}}
+    const statusEl=document.getElementById('status'); const instrEl=document.getElementById('instruction'); const debugEl=document.getElementById('debug');
+    if(gamepad){ if(statusEl) statusEl.innerText="Controller: "+gamepad.id; if(instrEl) instrEl.style.display='none';
+      if(debugEl){ const activeBtns=gamepad.buttons.map((b,i)=>(b.pressed||b.value>0.1)?`[${i}]`:`[${i}]`).join(' '); const activeAxes=gamepad.axes.map((a,i)=>`A${i}:${a.toFixed(2)}`).join(' '); debugEl.innerHTML=`${activeAxes}<br>${activeBtns}`;}
+    } else { if(statusEl) statusEl.innerText="Controller: Press any button"; if(instrEl) instrEl.style.display='block'; if(debugEl) debugEl.innerHTML="";}
+  }
+
+  function animate(){ renderer.setAnimationLoop(render); }
+
+  function render(){
+    updateGamepad(); updateGame();
+    if(keys['KeyW']) playerGroup.translateZ(-MOVE_SPEED); if(keys['KeyS']) playerGroup.translateZ(MOVE_SPEED);
+    if(keys['KeyA']) playerGroup.translateX(-MOVE_SPEED); if(keys['KeyD']) playerGroup.translateX(MOVE_SPEED);
+    if(keys['KeyQ']) playerGroup.rotation.y+=ROTATION_SPEED; if(keys['KeyE']) playerGroup.rotation.y-=ROTATION_SPEED;
+    if(keys['Space']) shoot();
+    if(gamepad){
+      const lsX=gamepad.axes[0], lsY=gamepad.axes[1], rsX=(gamepad.axes.length>2)?gamepad.axes[2]:0, dead=0.15;
+      if(Math.abs(rsX)>dead) playerGroup.rotation.y-=rsX*ROTATION_SPEED;
+      const moveDir=new THREE.Vector3(); if(Math.abs(lsY)>dead) moveDir.z=lsY*MOVE_SPEED; if(Math.abs(lsX)>dead) moveDir.x=lsX*MOVE_SPEED;
+      playerGroup.translateX(moveDir.x); playerGroup.translateZ(moveDir.z);
+      if(gamepad.buttons.some(b=>b.pressed||b.value>0.1)) shoot();
+      if(gamepad.buttons[9] && gamepad.buttons[9].pressed){ playerGroup.position.set(0,0,0); playerGroup.rotation.set(0,0,0);}
+    }
+    renderer.render(scene,camera);
+  }
+
+  window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight);});
+  animate();
+}
+</script>
+</body>
 </html>
-
