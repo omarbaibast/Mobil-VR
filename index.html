@@ -18,6 +18,18 @@
     </style>
   </head>
   <body>
+    <div id="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; cursor: pointer;">
+      <h1 style="font-size: 48px; margin-bottom: 20px;">VR PROCEDURAL SHOOTER</h1>
+      <div style="background: #333; padding: 30px; border-radius: 15px; border: 2px solid #555;">
+        <p style="font-size: 24px; color: #00ff00;">CLICK ANYWHERE TO START</p>
+        <p style="margin-top: 20px; opacity: 0.8;">(This ensures the window is focused for your controller)</p>
+        <div style="margin-top: 30px; text-align: left; display: inline-block;">
+          <p>🎮 <b>Controller:</b> LS to Move, RS to Turn, R2 to Shoot</p>
+          <p>⌨️ <b>Keyboard:</b> WASD to Move, Q/E to Turn, SPACE to Shoot</p>
+        </div>
+      </div>
+    </div>
+
     <div id="info">
       <h1>VR Procedural Shooter</h1>
       <p id="status">Controller: Searching (Press a button)...</p>

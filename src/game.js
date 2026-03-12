@@ -8,6 +8,15 @@ const ROTATION_SPEED = 0.03;
 const BULLET_SPEED = 1.2;
 const ENEMY_SPEED = 0.04;
 
+const keys = {};
+window.addEventListener('keydown', (e) => keys[e.code] = true);
+window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+document.getElementById('overlay').addEventListener('click', () => {
+    document.getElementById('overlay').style.display = 'none';
+    // Resume audio context if any, or just ensure focus
+});
+
 let score = 0;
 const bullets = [];
 const enemies = [];
@@ -325,6 +334,16 @@ function render() {
     updateGamepad();
     updateGame();
 
+    // 1. Keyboard Controls (Fallback)
+    if (keys['KeyW']) playerGroup.translateZ(-MOVE_SPEED);
+    if (keys['KeyS']) playerGroup.translateZ(MOVE_SPEED);
+    if (keys['KeyA']) playerGroup.translateX(-MOVE_SPEED);
+    if (keys['KeyD']) playerGroup.translateX(MOVE_SPEED);
+    if (keys['KeyQ']) playerGroup.rotation.y += ROTATION_SPEED;
+    if (keys['KeyE']) playerGroup.rotation.y -= ROTATION_SPEED;
+    if (keys['Space']) shoot();
+
+    // 2. Gamepad Controls
     if (gamepad) {
         // PS4 Controller Mapping (Standard):
         // Axes: 0: LS X, 1: LS Y, 2: RS X, 3: RS Y
@@ -332,47 +351,41 @@ function render() {
         
         const lsX = gamepad.axes[0]; 
         const lsY = gamepad.axes[1]; 
-        const rsX = gamepad.axes[2]; 
+        const rsX = (gamepad.axes.length > 2) ? gamepad.axes[2] : 0; 
         
         // Deadzone handling
         const deadzone = 0.15;
         
-        // 1. Rotation (Right Stick)
+        // Rotation (Right Stick)
         if (Math.abs(rsX) > deadzone) {
             playerGroup.rotation.y -= rsX * ROTATION_SPEED;
         }
 
-        // 2. Movement (Left Stick)
+        // Movement (Left Stick)
         if (Math.abs(lsX) > deadzone || Math.abs(lsY) > deadzone) {
-            const direction = new THREE.Vector3();
-            camera.getWorldDirection(direction);
-            direction.y = 0; 
-            direction.normalize();
-
-            const sideDirection = new THREE.Vector3();
-            sideDirection.crossVectors(camera.up, direction).normalize();
-
-            if (Math.abs(lsY) > deadzone) {
-                playerGroup.position.addScaledVector(direction, -lsY * MOVE_SPEED);
-            }
-            
-            if (Math.abs(lsX) > deadzone) {
-                playerGroup.position.addScaledVector(sideDirection, lsX * MOVE_SPEED);
-            }
+            const moveDir = new THREE.Vector3();
+            if (Math.abs(lsY) > deadzone) moveDir.z = lsY * MOVE_SPEED;
+            if (Math.abs(lsX) > deadzone) moveDir.x = lsX * MOVE_SPEED;
+            playerGroup.translateX(moveDir.x);
+            playerGroup.translateZ(moveDir.z);
         }
 
-        // 3. Shooting (R2 Trigger - Button 7)
-        if (gamepad.buttons[7].pressed || gamepad.buttons[7].value > 0.5) {
-            shoot();
+        // Shooting (Universal: Any trigger or face button)
+        // Check standard R2 (7) but also check others for non-standard controllers
+        let isShooting = false;
+        const shootButtons = [0, 1, 2, 3, 5, 7]; // A, B, X, Y, R1, R2
+        for (const btnIdx of shootButtons) {
+            if (gamepad.buttons[btnIdx] && (gamepad.buttons[btnIdx].pressed || gamepad.buttons[btnIdx].value > 0.5)) {
+                isShooting = true;
+                break;
+            }
         }
+        if (isShooting) shoot();
 
-        // 4. Reset Position (Options Button)
-        if (gamepad.buttons[9].pressed) {
+        // Reset Position (Options/Start)
+        if (gamepad.buttons[9] && gamepad.buttons[9].pressed) {
             playerGroup.position.set(0, 0, 0);
             playerGroup.rotation.set(0, 0, 0);
-            score = 0;
-            const scoreEl = document.getElementById('score-board');
-            if (scoreEl) scoreEl.innerText = `Score: ${score}`;
         }
     }
 
