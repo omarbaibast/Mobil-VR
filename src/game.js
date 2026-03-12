@@ -274,44 +274,45 @@ window.addEventListener("gamepaddisconnected", (e) => {
 });
 
 function updateGamepad() {
-    const gamepads = navigator.getGamepads();
+    // navigator.getGamepads() returns a snapshot. 
+    // We MUST call it every frame to get updated button/axis values.
+    const gamepads = (navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : []));
     if (!gamepads) return;
     
     let foundGamepad = null;
-    let debugText = "Detected Gamepads:<br>";
+    let activeCount = 0;
     
     for (let i = 0; i < gamepads.length; i++) {
         const gp = gamepads[i];
-        if (gp) {
-            debugText += `[${i}] ${gp.id.substring(0, 20)}...<br>`;
-            debugText += `Axes: ${gp.axes.map(a => a.toFixed(2)).join(', ')}<br>`;
-            
-            // Prioritize a "Standard" mapping or something that looks like a PS4 controller
-            // PS4 controllers often have "Wireless Controller" or "DualShock" in the ID
-            if (!foundGamepad || gp.id.toLowerCase().includes('wireless') || gp.id.toLowerCase().includes('dualshock')) {
+        if (gp && gp.connected) {
+            activeCount++;
+            // Prioritize the first connected gamepad or one that looks like a DualShock/Xbox controller
+            if (!foundGamepad) {
+                foundGamepad = gp;
+            } else if (gp.id.toLowerCase().includes('wireless') || gp.id.toLowerCase().includes('dualshock') || gp.id.toLowerCase().includes('xbox')) {
                 foundGamepad = gp;
             }
-        }
-    }
-    
-    const debugEl = document.getElementById('debug');
-    if (debugEl) {
-        if (foundGamepad) {
-            debugEl.innerHTML = debugText;
-        } else {
-            debugEl.innerHTML = "No gamepads detected. Press a button on your controller.";
         }
     }
 
     gamepad = foundGamepad;
     
     const statusEl = document.getElementById('status');
-    if (statusEl) {
-        if (gamepad) {
-            statusEl.innerText = "Controller: Connected (" + gamepad.id.substring(0, 15) + "...)";
-        } else {
-            statusEl.innerText = "Controller: Disconnected";
+    const instructionEl = document.getElementById('instruction');
+    const debugEl = document.getElementById('debug');
+
+    if (gamepad) {
+        if (statusEl) statusEl.innerText = `Controller: ${gamepad.id.substring(0, 20)}...`;
+        if (instructionEl) instructionEl.style.display = 'none'; // Hide instruction once connected
+        
+        if (debugEl) {
+            debugEl.innerHTML = `Axes: ${gamepad.axes.map(a => a.toFixed(2)).join(', ')}<br>` +
+                               `Buttons: ${gamepad.buttons.map((b, i) => i + ":" + (b.pressed ? "P" : "O")).join(' ')}`;
         }
+    } else {
+        if (statusEl) statusEl.innerText = "Controller: Searching (Press a button)...";
+        if (instructionEl) instructionEl.style.display = 'block';
+        if (debugEl) debugEl.innerHTML = "";
     }
 }
 
