@@ -19,12 +19,17 @@
   </head>
   <body>
     <div id="info">
-      <h1>VR Controller Explorer</h1>
+      <h1>VR Procedural Shooter</h1>
       <p id="status">Controller: Disconnected</p>
-      <p>Left Stick: Move | Right Stick: Turn</p>
+      <div id="score-board" style="font-size: 24px; font-weight: bold; color: #00ff00; margin: 10px 0;">Score: 0</div>
+      <p>LS: Move | RS: Turn | R2: Shoot</p>
       <div id="debug" style="font-family: monospace; font-size: 12px; background: rgba(0,0,0,0.5); padding: 10px; margin-top: 10px; border-radius: 5px; text-align: left; display: inline-block;">
-        Waiting for input... (Press any button on PS4 controller)
+        Waiting for input...
       </div>
+    </div>
+    <!-- Crosshair for VR/Desktop aiming -->
+    <div id="crosshair" style="position: fixed; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid rgba(0,255,0,0.5); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 100;">
+      <div style="position: absolute; top: 50%; left: 50%; width: 2px; height: 2px; background: #00ff00; transform: translate(-50%, -50%);"></div>
     </div>
     <script type="module" src="/src/game.js"></script>
   </body>

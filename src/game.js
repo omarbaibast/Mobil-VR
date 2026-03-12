@@ -1,17 +1,45 @@
 import * as THREE from 'three';
-import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 // --- Configuration ---
-const MOVE_SPEED = 0.1;
+const MOVE_SPEED = 0.15;
 const ROTATION_SPEED = 0.03;
+const BULLET_SPEED = 1.2;
+const ENEMY_SPEED = 0.04;
+
+let score = 0;
+const bullets = [];
+const enemies = [];
+let lastShotTime = 0;
+const shootCooldown = 150; 
+
+const loader = new GLTFLoader();
+let enemyModel = null;
+let gunModel = null;
+const mixers = []; // For animations
+const clock = new THREE.Clock();
 
 // --- Scene Setup ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x80a0e0);
-scene.fog = new THREE.Fog(0x80a0e0, 0, 50);
+scene.background = new THREE.Color(0x000000);
+
+// Realistic Skybox
+const textureLoader = new THREE.TextureLoader();
+textureLoader.load('https://threejs.org/examples/textures/2294472375_b4a848c635_c.jpg', 
+    (texture) => {
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        scene.background = texture;
+        scene.environment = texture;
+    },
+    undefined,
+    (err) => console.error('Sky texture failed to load:', err)
+);
+
+scene.fog = new THREE.FogExp2(0x80a0e0, 0.01);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 1.6, 3); // Standard human height
+camera.position.set(0, 1.6, 3); 
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -39,12 +67,15 @@ const skyMat = new THREE.MeshBasicMaterial({
 const sky = new THREE.Mesh(skyGeo, skyMat);
 scene.add(sky);
 
-// Floor
-const floorGeometry = new THREE.PlaneGeometry(200, 200);
+// Floor (Realistic Grass/Dirt)
+const floorGeometry = new THREE.PlaneGeometry(500, 500);
+const floorBase = textureLoader.load('https://threejs.org/examples/textures/terrain/grasslight-big.jpg');
+floorBase.wrapS = floorBase.wrapT = THREE.RepeatWrapping;
+floorBase.repeat.set(100, 100);
 const floorMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0x222222,
+    map: floorBase,
     roughness: 0.8,
-    metalness: 0.2
+    metalness: 0.1
 });
 const floor = new THREE.Mesh(floorGeometry, floorMaterial);
 floor.rotation.x = -Math.PI / 2;
@@ -84,6 +115,145 @@ for (let i = 0; i < 100; i++) {
     cube.castShadow = true;
     cube.receiveShadow = true;
     scene.add(cube);
+}
+
+let enemyAnimations = [];
+
+// --- Load Realistic Assets ---
+loader.load('https://threejs.org/examples/models/gltf/Soldier.glb', 
+    (gltf) => {
+        enemyModel = gltf.scene;
+        enemyAnimations = gltf.animations;
+        enemyModel.traverse(child => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        // Pre-warm spawning
+        for(let i=0; i<5; i++) createEnemy();
+    },
+    undefined,
+    (err) => {
+        console.error('Soldier model failed to load:', err);
+        // Fallback to a simple box if model fails
+        enemyModel = new THREE.Group();
+        const box = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
+        box.position.y = 1;
+        enemyModel.add(box);
+        for(let i=0; i<5; i++) createEnemy();
+    }
+);
+
+// Simple Gun Placeholder (until we load a model or use a better primitive)
+const gunGroup = new THREE.Group();
+const gunBody = new THREE.Mesh(
+    new THREE.BoxGeometry(0.1, 0.15, 0.4),
+    new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 })
+);
+gunBody.position.set(0.2, -0.2, -0.5);
+gunGroup.add(gunBody);
+camera.add(gunGroup);
+
+function createEnemy() {
+    if (!enemyModel) return;
+
+    const group = enemyModel.clone();
+    let mixer = null;
+    
+    if (enemyAnimations && enemyAnimations.length > 1) {
+        mixer = new THREE.AnimationMixer(group);
+        const action = mixer.clipAction(enemyAnimations[1]); // Walk
+        action.play();
+        mixers.push(mixer);
+    }
+
+    // Random position
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 30 + Math.random() * 20;
+    group.position.set(
+        playerGroup.position.x + Math.cos(angle) * dist,
+        0,
+        playerGroup.position.z + Math.sin(angle) * dist
+    );
+    group.scale.set(1.5, 1.5, 1.5);
+    
+    scene.add(group);
+    enemies.push({ 
+        mesh: group, 
+        mixer: mixer,
+        health: 1
+    });
+}
+
+function shoot() {
+    const now = Date.now();
+    if (now - lastShotTime < shootCooldown) return;
+    lastShotTime = now;
+
+    const bulletGeo = new THREE.SphereGeometry(0.1);
+    const bulletMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    const bullet = new THREE.Mesh(bulletGeo, bulletMat);
+    
+    // Start at camera position
+    const startPos = new THREE.Vector3();
+    camera.getWorldPosition(startPos);
+    bullet.position.copy(startPos);
+    
+    // Get direction from camera
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    
+    bullets.push({ mesh: bullet, dir: direction });
+    scene.add(bullet);
+}
+
+function updateGame() {
+    const delta = clock.getDelta();
+    
+    // Update Animations
+    for (const mixer of mixers) {
+        mixer.update(delta);
+    }
+
+    // Update Bullets
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.mesh.position.addScaledVector(b.dir, BULLET_SPEED);
+        
+        if (b.mesh.position.distanceTo(playerGroup.position) > 150) {
+            scene.remove(b.mesh);
+            bullets.splice(i, 1);
+            continue;
+        }
+        
+        for (let j = enemies.length - 1; j >= 0; j--) {
+            const e = enemies[j];
+            if (b.mesh.position.distanceTo(e.mesh.position) < 1.5) {
+                scene.remove(e.mesh);
+                enemies.splice(j, 1);
+                scene.remove(b.mesh);
+                bullets.splice(i, 1);
+                
+                score += 10;
+                const scoreEl = document.getElementById('score-board');
+                if (scoreEl) scoreEl.innerText = `Score: ${score}`;
+                break;
+            }
+        }
+    }
+    
+    // Update Enemies
+    for (const e of enemies) {
+        const dir = new THREE.Vector3().subVectors(playerGroup.position, e.mesh.position).normalize();
+        e.mesh.position.addScaledVector(dir, ENEMY_SPEED);
+        e.mesh.lookAt(playerGroup.position.x, 0, playerGroup.position.z);
+    }
+    
+    // Spawn enemies
+    if (enemies.length < 15 && Math.random() < 0.015) {
+        createEnemy();
+    }
 }
 
 // --- Gamepad Handling ---
@@ -152,11 +322,12 @@ function animate() {
 
 function render() {
     updateGamepad();
+    updateGame();
 
     if (gamepad) {
         // PS4 Controller Mapping (Standard):
         // Axes: 0: LS X, 1: LS Y, 2: RS X, 3: RS Y
-        // Buttons: 9 is Options
+        // Buttons: 7 is R2 Trigger, 9 is Options
         
         const lsX = gamepad.axes[0]; 
         const lsY = gamepad.axes[1]; 
@@ -189,10 +360,18 @@ function render() {
             }
         }
 
-        // 3. Reset Position (Options Button)
+        // 3. Shooting (R2 Trigger - Button 7)
+        if (gamepad.buttons[7].pressed || gamepad.buttons[7].value > 0.5) {
+            shoot();
+        }
+
+        // 4. Reset Position (Options Button)
         if (gamepad.buttons[9].pressed) {
             playerGroup.position.set(0, 0, 0);
             playerGroup.rotation.set(0, 0, 0);
+            score = 0;
+            const scoreEl = document.getElementById('score-board');
+            if (scoreEl) scoreEl.innerText = `Score: ${score}`;
         }
     }
 
