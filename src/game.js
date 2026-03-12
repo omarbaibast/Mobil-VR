@@ -312,11 +312,23 @@ function updateGamepad() {
 
     if (gamepad) {
         if (statusEl) statusEl.innerText = `Controller: ${gamepad.id.substring(0, 20)}...`;
-        if (instructionEl) instructionEl.style.display = 'none'; // Hide instruction once connected
+        if (instructionEl) instructionEl.style.display = 'none'; 
         
         if (debugEl) {
-            debugEl.innerHTML = `Axes: ${gamepad.axes.map(a => a.toFixed(2)).join(', ')}<br>` +
-                               `Buttons: ${gamepad.buttons.map((b, i) => i + ":" + (b.pressed ? "P" : "O")).join(' ')}`;
+            const activeButtons = gamepad.buttons
+                .map((b, i) => (b.pressed || b.value > 0.1) ? `<span style="color:#00ff00; font-weight:bold;">[${i}]</span>` : `[${i}]`)
+                .join(' ');
+            
+            const activeAxes = gamepad.axes
+                .map((a, i) => `<div style="display:inline-block; width:60px;">A${i}:<span style="color:${Math.abs(a) > 0.1 ? '#00ff00' : '#888'}">${a.toFixed(2)}</span></div>`)
+                .join(' ');
+
+            debugEl.innerHTML = `<div style="border-bottom:1px solid #444; margin-bottom:5px; padding-bottom:5px;">${activeAxes}</div>` +
+                               `<div>${activeButtons}</div>`;
+            
+            // Visual pulse on any input
+            const hasInput = gamepad.buttons.some(b => b.pressed || b.value > 0.1) || gamepad.axes.some(a => Math.abs(a) > 0.1);
+            debugEl.style.background = hasInput ? 'rgba(0, 100, 0, 0.7)' : 'rgba(0,0,0,0.5)';
         }
     } else {
         if (statusEl) statusEl.innerText = "Controller: Searching (Press a button)...";
@@ -361,7 +373,7 @@ function render() {
             playerGroup.rotation.y -= rsX * ROTATION_SPEED;
         }
 
-        // Movement (Left Stick)
+        // Movement (Left Stick - usually axes 0 and 1)
         if (Math.abs(lsX) > deadzone || Math.abs(lsY) > deadzone) {
             const moveDir = new THREE.Vector3();
             if (Math.abs(lsY) > deadzone) moveDir.z = lsY * MOVE_SPEED;
@@ -370,12 +382,11 @@ function render() {
             playerGroup.translateZ(moveDir.z);
         }
 
-        // Shooting (Universal: Any trigger or face button)
-        // Check standard R2 (7) but also check others for non-standard controllers
+        // Shooting (HYPER-SENSITIVE: Any button fires)
         let isShooting = false;
-        const shootButtons = [0, 1, 2, 3, 5, 7]; // A, B, X, Y, R1, R2
-        for (const btnIdx of shootButtons) {
-            if (gamepad.buttons[btnIdx] && (gamepad.buttons[btnIdx].pressed || gamepad.buttons[btnIdx].value > 0.5)) {
+        for (let i = 0; i < gamepad.buttons.length; i++) {
+            const btn = gamepad.buttons[i];
+            if (btn && (btn.pressed || btn.value > 0.1)) {
                 isShooting = true;
                 break;
             }
